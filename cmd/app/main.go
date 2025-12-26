@@ -9,6 +9,7 @@ import (
 
 func main() {
 	r := gin.Default()
+
 	r.GET("/health", handler.Health)
 	r.GET("/hello", handler.Hello)
 
