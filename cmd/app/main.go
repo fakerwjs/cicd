@@ -1,9 +1,8 @@
 package main
 
 import (
-	"log"
-
 	"cicd/internal/handler"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
