@@ -40,8 +40,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
-            docker stop go-app || true
-            docker rm go-app || true
             docker run -d \
               --name go-app \
               -p 8080:8080 \
