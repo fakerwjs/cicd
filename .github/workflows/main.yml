@@ -39,7 +39,14 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            # 拉取最新镜像
             docker pull ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+            
+            # 停止并删除旧容器
+            docker stop go-app 2>/dev/null || true
+            docker rm go-app 2>/dev/null || true
+            
+            # 运行新容器
             docker run -d \
               --name go-app \
               -p 8080:8080 \
