@@ -21,4 +21,29 @@ jobs:
         run: go test ./... -v
 
       - name: Build Docker image
-        run: docker build -t go-cicd-template:local .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest .
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+            docker stop go-app || true
+            docker rm go-app || true
+            docker run -d \
+              --name go-app \
+              -p 8080:8080 \
+              -e APP_ENV=prod \
+              ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
