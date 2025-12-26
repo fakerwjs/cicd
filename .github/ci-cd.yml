@@ -9,36 +9,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.22'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
 
-    - name: Go Test
-      run: go test ./... -v
+      - name: Go Test
+        run: go test ./... -v
 
-    - name: Docker Build
-      run: |
-        docker build -t myrepo/go-cicd-template:latest .
-
-    - name: Docker Login
-      run: |
-        echo "${{ secrets.DOCKER_PASSWORD }}" | \
-        docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-    - name: Docker Push
-      run: docker push myrepo/go-cicd-template:latest
-
-    - name: Deploy (SSH)
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        script: |
-          cd /opt/go-cicd-template
-          docker-compose pull
-          docker-compose up -d
+      - name: Build Docker image
+        run: docker build -t go-cicd-template:local .
