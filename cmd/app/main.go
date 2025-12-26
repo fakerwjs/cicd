@@ -2,15 +2,17 @@ package main
 
 import (
 	"log"
-	"net/http"
 
 	"cicd/internal/handler"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", handler.Health)
+	r := gin.Default()
+	r.GET("/health", handler.Health)
+	r.GET("/hello", handler.Hello)
 
 	log.Println("server start :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	r.Run(":8080")
 }
