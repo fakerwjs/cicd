@@ -25,10 +25,17 @@ jobs:
                   password: ${{ secrets.DOCKER_PASSWORD }}
 
             - name: Build Docker image
-              run: docker build -t ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest .
+              run: |
+                  echo "Building image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
+                  docker build -t ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest .
+                  echo "Build completed successfully"
 
             - name: Push Docker image
-              run: docker push ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+              run: |
+                  echo "Pushing image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
+                  docker push ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+                  echo "Push completed successfully"
+                  docker images | grep go-cicd-template
 
             - name: Deploy to Server
               uses: appleboy/ssh-action@v1.0.3
@@ -37,11 +44,20 @@ jobs:
                   username: ${{ secrets.SERVER_USER }}
                   key: ${{ secrets.SERVER_SSH_KEY }}
                   script: |
-                      docker pull ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+                      echo "Pulling image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
+                      docker pull ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest || { echo "Failed to pull image"; exit 1; }
+                      
+                      echo "Stopping existing container..."
                       docker stop go-app 2>/dev/null || true
                       docker rm go-app 2>/dev/null || true
+                      
+                      echo "Starting new container..."
                       docker run -d \
                         --name go-app \
                         -p 8080:8080 \
                         -e APP_ENV=prod \
                         ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+                      
+                      echo "Verifying container status..."
+                      docker ps | grep go-app
+                      echo "Deployment completed successfully"
