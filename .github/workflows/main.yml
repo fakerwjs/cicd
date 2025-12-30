@@ -1,6 +1,5 @@
 name: Go CI/CD
 
-
 on:
     push:
         branches: [ "main" ]
@@ -25,7 +24,7 @@ jobs:
                   registry: crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com
                   username: ${{ secrets.ALIYUN_USERNAME }}
                   password: ${{ secrets.ALIYUN_PASSWORD }}
-              
+
             - name: Verify Docker Login
               run: |
                   echo "Checking Docker login status..."
@@ -54,24 +53,24 @@ jobs:
                       echo "Configuring Docker timeout..."
                       export DOCKER_CLIENT_TIMEOUT=300
                       export COMPOSE_HTTP_TIMEOUT=300
-                      
+
                       echo "Logging in to Aliyun Container Registry..."
                       echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com -u "${{ secrets.ALIYUN_USERNAME }}" --password-stdin
-                      
+
                       echo "Pulling image: crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest"
                       docker pull crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest || { echo "Failed to pull image"; exit 1; }
-                      
+
                       echo "Stopping existing container..."
                       docker stop go-app 2>/dev/null || true
                       docker rm go-app 2>/dev/null || true
-                      
+
                       echo "Starting new container..."
                       docker run -d \
                         --name go-app \
                         -p 8080:8080 \
                         -e APP_ENV=prod \
                         crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest
-                      
+
                       echo "Verifying container status..."
                       docker ps | grep go-app
                       echo "Deployment completed successfully"
