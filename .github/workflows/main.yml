@@ -27,15 +27,15 @@ jobs:
             - name: Build Docker image
               run: |
                   echo "Building image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
-                  docker build -t ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest .
+                  docker build -t ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest . || { echo "Docker build failed"; exit 1; }
                   echo "Build completed successfully"
+                  docker images | grep "${{ secrets.DOCKER_USERNAME }}/go-cicd-template" || { echo "Image not found locally"; exit 1; }
 
             - name: Push Docker image
               run: |
                   echo "Pushing image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
-                  docker push ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+                  docker push ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest || { echo "Docker push failed"; exit 1; }
                   echo "Push completed successfully"
-                  docker images | grep go-cicd-template
 
             - name: Deploy to Server
               uses: appleboy/ssh-action@v1.0.3
