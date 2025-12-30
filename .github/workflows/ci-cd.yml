@@ -18,28 +18,29 @@ jobs:
             - name: Go Test
               run: go test ./... -v
 
-            - name: Login to Docker Hub
+            - name: Login to Aliyun Container Registry
               uses: docker/login-action@v3
               with:
-                  username: ${{ secrets.DOCKER_USERNAME }}
-                  password: ${{ secrets.DOCKER_PASSWORD }}
+                  registry: registry.cn-hangzhou.aliyuncs.com
+                  username: ${{ secrets.ALIYUN_USERNAME }}
+                  password: ${{ secrets.ALIYUN_PASSWORD }}
               
             - name: Verify Docker Login
               run: |
                   echo "Checking Docker login status..."
-                  docker info | grep Username || echo "Warning: Not logged in to Docker Hub"
+                  docker info | grep "Registry:" || echo "Registry check completed"
 
             - name: Build Docker image
               run: |
-                  echo "Building image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
-                  docker build -t ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest . || { echo "Docker build failed"; exit 1; }
+                  echo "Building image: registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest"
+                  docker build -t registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest . || { echo "Docker build failed"; exit 1; }
                   echo "Build completed successfully"
-                  docker images | grep "${{ secrets.DOCKER_USERNAME }}/go-cicd-template" || { echo "Image not found locally"; exit 1; }
+                  docker images | grep "go-cicd-template" || { echo "Image not found locally"; exit 1; }
 
             - name: Push Docker image
               run: |
-                  echo "Pushing image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
-                  docker push ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest || { echo "Docker push failed"; exit 1; }
+                  echo "Pushing image: registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest"
+                  docker push registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest || { echo "Docker push failed"; exit 1; }
                   echo "Push completed successfully"
 
             - name: Deploy to Server
@@ -49,11 +50,11 @@ jobs:
                   username: ${{ secrets.SERVER_USER }}
                   key: ${{ secrets.SERVER_SSH_KEY }}
                   script: |
-                      echo "Logging in to Docker Hub..."
-                      echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+                      echo "Logging in to Aliyun Container Registry..."
+                      echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login registry.cn-hangzhou.aliyuncs.com -u "${{ secrets.ALIYUN_USERNAME }}" --password-stdin
                       
-                      echo "Pulling image: ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest"
-                      docker pull ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest || { echo "Failed to pull image"; exit 1; }
+                      echo "Pulling image: registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest"
+                      docker pull registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest || { echo "Failed to pull image"; exit 1; }
                       
                       echo "Stopping existing container..."
                       docker stop go-app 2>/dev/null || true
@@ -64,7 +65,7 @@ jobs:
                         --name go-app \
                         -p 8080:8080 \
                         -e APP_ENV=prod \
-                        ${{ secrets.DOCKER_USERNAME }}/go-cicd-template:latest
+                        registry.cn-hangzhou.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest
                       
                       echo "Verifying container status..."
                       docker ps | grep go-app
