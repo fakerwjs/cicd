@@ -17,3 +17,9 @@ func Hello(c *gin.Context) {
 		"message": "hello world",
 	})
 }
+
+func Test(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "test succeed",
+	})
+}

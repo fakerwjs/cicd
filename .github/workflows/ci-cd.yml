@@ -26,23 +26,13 @@ jobs:
                   username: ${{ secrets.ALIYUN_USERNAME }}
                   password: ${{ secrets.ALIYUN_PASSWORD }}
 
-            - name: Verify Docker Login
-              run: |
-                  echo "Checking Docker login status..."
-                  docker info | grep "Registry:" || echo "Registry check completed"
-
             - name: Build Docker image
               run: |
-                  echo "Building image: crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest"
-                  docker build -t crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest . || { echo "Docker build failed"; exit 1; }
-                  echo "Build completed successfully"
-                  docker images | grep "go-cicd-template" || { echo "Image not found locally"; exit 1; }
+                  docker build -t crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest .
 
             - name: Push Docker image
               run: |
-                  echo "Pushing image: crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest"
-                  docker push crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest || { echo "Docker push failed"; exit 1; }
-                  echo "Push completed successfully"
+                  docker push crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest
 
             - name: Deploy to Server
               uses: appleboy/ssh-action@v1.0.3
@@ -51,23 +41,17 @@ jobs:
                   username: ${{ secrets.SERVER_USER }}
                   key: ${{ secrets.SERVER_SSH_KEY }}
                   script: |
-                      echo "Logging in to Aliyun Container Registry..."
                       echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com -u "${{ secrets.ALIYUN_USERNAME }}" --password-stdin
-
-                      echo "Pulling image: crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest"
-                      docker pull crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest || { echo "Failed to pull image"; exit 1; }
-
-                      echo "Stopping existing container..."
+                      
+                      docker pull crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest
+                      
                       docker stop go-app 2>/dev/null || true
                       docker rm go-app 2>/dev/null || true
-
-                      echo "Starting new container..."
+                      
                       docker run -d \
                         --name go-app \
                         -p 8080:8080 \
                         -e APP_ENV=prod \
                         crpi-kc1xjy517ehrbwcm.cn-shanghai.personal.cr.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACE }}/go-cicd-template:latest
-
-                      echo "Verifying container status..."
+                      
                       docker ps | grep go-app
-                      echo "Deployment completed successfully"
